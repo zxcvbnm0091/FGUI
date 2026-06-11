@@ -1,0 +1,34 @@
+# --- Python Specific ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# --- Environment & Credentials ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- Databases & Local Data (CRITICAL for your structure) ---
+# This prevents uploading your scraped games database to GitHub
+data/*.db
+data/*.json
+
+# --- Editor Specific ---
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# --- OS Specific ---
+DS_Store
+Thumbs.db

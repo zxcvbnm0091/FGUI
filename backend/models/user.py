@@ -7,10 +7,8 @@ class UserBase(SQLModel):
     username: str
     email: str
 
-
 class UserCreate(UserBase):
     password: str
-
 
 class UserPublic(UserBase):
     id: str
@@ -18,6 +16,10 @@ class UserPublic(UserBase):
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
 
+class UserUpdate(SQLModel):
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
 
 class User(SQLModel, table=True):
     id: str = Field(default_factory=generate_cuid, primary_key=True, index=True)

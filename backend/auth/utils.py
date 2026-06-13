@@ -1,8 +1,9 @@
 import  jwt
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Session
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from sqlmodel import Session
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Any
+from typing import Optional, Any, List
 from ..core.config import settings
 from ..services.user import get_user_by_email
 from ..models.user import User
@@ -28,7 +29,7 @@ def authenticate_user(session: Session, email: str, password: str) -> Optional[U
     return user
 
 def create_access_token(user_id: str, email: str, ) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minute=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     payload = {
         "sub": str(user_id),
@@ -36,7 +37,7 @@ def create_access_token(user_id: str, email: str, ) -> str:
         "exp": expire
     }
 
-    encode_jwt = jwt.encode(payload, settings.SECRET_KEY, settings.ALGORITHM)
+    encode_jwt = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     return encode_jwt
 
@@ -48,9 +49,9 @@ def create_refresh_token(user_id: str) -> tuple[str, datetime]:
         "exp": expires_at
     }
 
-    token = jwt.encode(payload, settings.SECRET_KEY, settings.ALGORITHM)
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     return token, expires_at
 
-def decode_refresh_payload(refresh_token: str) ->str:
-    return jwt.decode(refresh_token, settings.SECRET_KEY, settings.ALGORITHM)
+def decode_refresh_payload(refresh_token: str) ->List[dict]:
+    return jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])

@@ -26,10 +26,13 @@ class UserUpdate(SQLModel):
     bio: Optional[str] = None
 
 class User(SQLModel, table=True):
+    __tablename__="users"
+
     id: str = Field(default_factory=generate_cuid, primary_key=True, index=True)
     username: str = Field(unique=True, index=True)
     email: str = Field(unique=True, index=True)
     password_hash: str
+    role: str = Field(default="USER")
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
     bio: Optional[str] = None

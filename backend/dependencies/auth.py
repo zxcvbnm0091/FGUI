@@ -1,43 +1,52 @@
-from fastapi import Cookie, HTTPException, status, Depends
-from sqlmodel import Session, select
+# dependencies/auth.py
+import jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlmodel import Session
 from database.db import get_session
 from models.user import User
+from core.config import settings
 
-def get_current_user(session_id: str = Cookie(None), session: Session = Depends(get_session)) -> User:
-    if not session_id:
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    session: Session = Depends(get_session),
+) -> User:
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+            )
+    except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            details="Not authenticated. Missing session cookie"
+            detail="Access token expired",
         )
-    
-    user = session.get(User, session_id)
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid access token",
+        )
 
+    user = session.get(User, user_id)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, details="Invalid session cookie")
-    
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
     return user
 
-def get_current_admin(session_id: str = Cookie(None), session: Session = Depends(get_session)) -> User:
-    if not session_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            details="Not authorized. Missing sesison cookie"
-        )
-    
-    admin = session.get(User, session_id)
 
-    if not admin:
+def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != "ADMIN":
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            details="Invalid cookie session"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized",
         )
-    
-    if admin.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            details="Not authorized"
-        )
-    
-    return admin
-
+    return current_user

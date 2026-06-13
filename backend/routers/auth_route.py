@@ -2,7 +2,7 @@ import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from database.db import get_session
-from models.user import User, UserCreate, UserLogin
+from models.user import User, UserCreate, UserLogin, UserPublic
 from passlib.context import CryptContext
 from ..auth.utils import create_access_token, create_refresh_token, decode_refresh_payload, hash_password, verify_password
 from ..models.token import Token, TokenBase, TokenCreate
@@ -65,6 +65,8 @@ def register(payload: UserCreate, session: Session = Depends(get_session)):
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
+
+    return {"status_code": status.HTTP_200_OK, "message": "Register success", "data": UserPublic}
      
 
 @router.get("/refresh")

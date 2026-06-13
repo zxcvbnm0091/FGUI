@@ -10,6 +10,10 @@ class UserBase(SQLModel):
 class UserCreate(UserBase):
     password: str
 
+class UserLogin(SQLModel):
+    email: str
+    password: str
+    
 class UserPublic(UserBase):
     id: str
     display_name: Optional[str] = None

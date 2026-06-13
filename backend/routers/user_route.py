@@ -11,14 +11,16 @@ router = APIRouter(prefix="/users", tags=["Users"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # CREATE USER
-@router.post("/", response__model=User)
+@router.post("/", response__model=UserPublic)
 def create_user(payload: UserCreate, session: Session = Depends(get_session)):
     existing_user = session.exec(select(User).where(User.email == payload.email)).first()
 
     hashed_password = pwd_context.hash(payload.password)
 
     if existing_user:
-        raise HTTPException(status_code="400", detail="Email already registered")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Email already registered")
     
     db_user = User (
         username = payload.username,
@@ -63,7 +65,7 @@ def get_user_by_id(user_id: str, current_admin: User = Depends(get_current_admin
     return user
 
 # GET USER DATA (USER)
-@router.get("/me", response_model="UserPublic")
+@router.get("/me", response_model=UserPublic)
 def get_user_me(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     if not  current_user:
         raise HTTPException(
@@ -76,7 +78,7 @@ def get_user_me(current_user: User = Depends(get_current_user), session: Session
     return user
 
 # UPDATE USER DATA (USER) 
-@router.patch("/me", response_model="UserPublic")
+@router.patch("/me", response_model=UserPublic)
 def update_user_me(payload: UserUpdate, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     user = session.get(User, current_user.id)
     
@@ -98,7 +100,7 @@ def update_user_me(payload: UserUpdate, current_user: User = Depends(get_current
     return user
 
 # UPDATE USER DATA (ADMIN)
-@router.patch("/admin/users/{user_id}", response_model=UserPublic)
+@router.patch("/{user_id}", response_model=UserPublic)
 def admin_update_any_user(user_id: str, payload: UserUpdate, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     
     if current_user.role != "ADMIN":
@@ -107,7 +109,7 @@ def admin_update_any_user(user_id: str, payload: UserUpdate, current_user: User 
             details="Not authorized"
         )
     
-    target_user = session.get(User, id)
+    target_user = session.get(User, user_id)
 
     if not target_user:
         raise HTTPException(

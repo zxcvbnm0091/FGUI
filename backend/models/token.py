@@ -20,7 +20,7 @@ class Token(SQLModel, table=True):
     token: str = Field(unique=True, index=True)
     
     # Removed unique=True so a user can be logged in on multiple devices at once
-    user_id: str = Field(foreign_key="user.id", ondelete="CASCADE") 
+    user_id: str = Field(foreign_key="users.id", ondelete="CASCADE") 
     
     type: str = Field(default="refresh")
     expires: datetime
